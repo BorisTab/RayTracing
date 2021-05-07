@@ -4,10 +4,12 @@
 #include <sphere.h>
 
 int main() {
+    std::vector<Light> lights = {Light({-1000, 1000, 500}, 1)};
 
     Scene scene;
     scene.Set_canvas(1080, 1920, {127, 199, 255});
     scene.Set_camera({0., 0., 0.}, 70/180. * M_PI);
+    scene.Set_lights(lights);
 
     Sphere sphere1({800, 200, 2100}, 400, Color(102, 0, 204));
     Sphere sphere2({300, -50, 2000}, 400, Color(255, 165, 0));

@@ -3,11 +3,22 @@
 
 #include <canvas.h>
 
+struct Light {
+    Light(const Vector3<double>& position, double intensity);
+
+    Vector3<double> position;
+    double intensity;
+};
+
 class Scene {
 public:
     void Set_canvas(size_t height, size_t width, const Color& bg_color);
 
     void Set_camera(const Vector3<double>& camera_pos, double fov);
+
+    void Set_lights(const std::vector<Light>& lights);
+
+    const std::vector<Light>& Get_lights();
 
     Canvas& Get_canvas();
 
@@ -20,8 +31,11 @@ public:
 
 private:
     Canvas _canvas;
+
     double _fov = 0; // vertical, in radians
     Vector3<double> _camera_pos;
+
+    std::vector<Light> _lights;
 };
 
 #endif //RAYTRACING_SCENE_H

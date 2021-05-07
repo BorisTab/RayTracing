@@ -25,8 +25,16 @@ public:
         return x * vec.x + y * vec.y + z * vec.z;
     }
 
+    Vector3 operator*(const T scalar) const {
+        return Vector3(x * scalar, y * scalar, z * scalar);
+    }
+
     Vector3 operator-(const Vector3& vec) const {
         return Vector3(x - vec.x, y - vec.y, z - vec.z);
+    }
+
+    Vector3 normalized() const {
+        return Vector3(x / len(), y / len(), z / len());
     }
 
     Vector3& operator-() {
@@ -38,6 +46,10 @@ public:
 
     double len() const {
         return std::sqrt(x*x + y*y + z*z);
+    }
+
+    double square_len() const {
+        return x*x + y*y + z*z;
     }
 
     double operator^(const Vector3& vec) const {
@@ -53,9 +65,11 @@ public:
         return sqrt(1 - pow(cosinus, 2));
     }
 
-    double parallelogram_area(const Vector3& vec) {
+    double parallelogram_area(const Vector3& vec) const {
         return len() * vec.len() * sin(vec);
     }
+
+
 
     Vector3& operator=(const Vector3& color) {
         x = color.x;
@@ -103,7 +117,7 @@ public:
 //    }
 
     Color operator*(const double intensity) {
-        return Color(x * intensity, y * intensity, z * intensity);
+        return Color(std::min(255., x * intensity), std::min(255., y * intensity), std::min(255., z * intensity));
     }
 };
 
