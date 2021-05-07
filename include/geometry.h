@@ -69,7 +69,9 @@ public:
         return len() * vec.len() * sin(vec);
     }
 
-
+    Vector3 reflect_with(const Vector3& vec) const {
+        return *this - vec.normalized() * 2 * len() * cos(vec);
+    }
 
     Vector3& operator=(const Vector3& color) {
         x = color.x;

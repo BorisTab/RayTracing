@@ -4,18 +4,28 @@
 #include <geometry.h>
 #include <scene.h>
 
-//struct Material {
-//    Material(const Color& color): diffuse_color(color) {}
-//
-//    Color diffuse_color;
-//};
+struct Material {
+    Material(const Color& color, const Vector3<double>& albedo, int specular_power):
+    diffuse_color(color),
+    albedo(albedo),
+    specular_power(specular_power) {}
+
+    Color diffuse_color;
+
+    // albedo:
+    // x - ambient_coef
+    // y - diffuse_coef
+    // z - specular_coef
+    Vector3<double> albedo;
+    int specular_power;
+};
 
 class Sphere {
 public:
-    Sphere(const Vector3<double>& center, size_t radius, const Color& color):
+    Sphere(const Vector3<double>& center, size_t radius, const Material& material):
         center(center.x, -center.y, center.z),
         radius(radius),
-        color(color) {}
+        material(material) {}
 
     void Set_on_scene(Scene& scene);
 
@@ -31,7 +41,7 @@ private:
 private:
     Vector3<double> center;
     size_t radius;
-    Color color;
+    Material material;
 };
 
 #endif //RAYTRACING_SPHERE_H

@@ -20,23 +20,21 @@ void Sphere::Set_on_scene(Scene &scene) {
 Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray, const Color& bg_color, double& dist, const std::vector<Light>& lights) {
     Vector3<double> normal(0, 0, 0);
     double diffuse_light_intensity = 0;
+    double specular_light_intensity = 0;
 
     if (Ray_intersect(origin, ray, dist, normal)) {
         auto dir_from_camera_to_point = (ray - origin).normalized() * dist;
 
         for (auto& light: lights) {
             auto light_dir_form_point_to_light = (light.position - origin - dir_from_camera_to_point).normalized();
-            diffuse_light_intensity += light.intensity * std::max(0., light_dir_form_point_to_light * normal.normalized());
-//            0.5 - light_dir_form_point_to_light.cos(normal.normalized()) / 2.
-//            printf("%g", light_dir_form_point_to_light.cos(normal.normalized()));
-//            printf("%g ", diffuse_light_intensity);
 
-//            if (light_dir_form_point_to_light * normal.normalized() > 0) {
-//                printf("%g\n", light_dir_form_point_to_light * normal.normalized());
-//            }
+            diffuse_light_intensity += light.intensity * std::max(0., light_dir_form_point_to_light * normal.normalized());
+            specular_light_intensity += light.intensity * pow(std::max(0., light_dir_form_point_to_light.reflect_with(normal) * ray), material.specular_power);
         }
 
-        return color * diffuse_light_intensity;
+        return material.diffuse_color * material.albedo.x +
+               material.diffuse_color * diffuse_light_intensity * material.albedo.y
+               + Color(255, 255, 255) * specular_light_intensity * material.albedo.z;
     }
 
     return bg_color;
