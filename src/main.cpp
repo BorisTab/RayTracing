@@ -4,7 +4,8 @@
 #include <sphere.h>
 
 int main() {
-    std::vector<Light> lights = {Light({-1000, 1000, 500}, 1)};
+    std::vector<Light> lights = {Light({-1000, 1000, 0}, 0.5),
+                                 Light({0, 1000, 0}, 0.5)};
 
     Scene scene;
     scene.Set_canvas(1080, 1920, {127, 199, 255});
@@ -14,7 +15,9 @@ int main() {
     Sphere sphere1({800, 200, 2100},400, {Color(102, 0, 204), {0.3, 1, 0}, 10});
     Sphere sphere2({300, -50, 2000},400, {Color(255, 165, 0), {0.3, 1, 0.3}, 30});
     Sphere sphere3({-30, -100,500}, 100, {Color(102, 0, 204), {0.3, 1, 1}, 30});
-    Sphere sphere4({-200,0,   1000},200, {Color(255, 165, 0), {0.4, 1, 1}, 50});
+    Sphere sphere4({-224,120, 400},50, {Color(255, 165, 0), {0.4, 1, 0.8}, 30});
+//
+//        Sphere sphere1({0, 0, 10},5, {Color(102, 0, 204), {0.3, 1, 0}, 10});
 
     std::vector<Sphere> spheres;
     spheres.push_back(sphere1);

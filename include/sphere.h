@@ -36,7 +36,9 @@ private:
 
     bool Ray_intersect(const Vector3<double>& origin, const Vector3<double>& ray, double& dist_to_sphere) const;
 
-    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, const Color& bg_color, double& dist, const std::vector<Light>& lights);
+    static bool Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>& origin, const Vector3<double>& ray_to_pixel, double& min_dist, size_t& min_dist_sphere_num);
+
+    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, std::vector<Sphere> &spheres, const Color& bg_color, double& dist, const std::vector<Light>& lights);
 
 private:
     Vector3<double> center;
