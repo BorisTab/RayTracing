@@ -5,10 +5,14 @@
 #include <scene.h>
 
 struct Material {
-    Material(const Color& color, const Vector3<double>& albedo, int specular_power):
+    Material() = default;
+
+    Material(const Color& color, const Vector3<double>& albedo, int specular_power, double reflectivity):
+
     diffuse_color(color),
     albedo(albedo),
-    specular_power(specular_power) {}
+    specular_power(specular_power),
+    reflectivity(reflectivity) {}
 
     Color diffuse_color;
 
@@ -18,6 +22,7 @@ struct Material {
     // z - specular_coef
     Vector3<double> albedo;
     int specular_power;
+    double reflectivity;
 };
 
 class Sphere {
@@ -27,7 +32,7 @@ public:
         radius(radius),
         material(material) {}
 
-    void Set_on_scene(Scene& scene);
+//    void Set_on_scene(Scene& scene);
 
     static void Set_spheres_on_scene(Scene& scene, std::vector<Sphere>& spheres);
 
@@ -36,9 +41,9 @@ private:
 
     bool Ray_intersect(const Vector3<double>& origin, const Vector3<double>& ray, double& dist_to_sphere) const;
 
-    static bool Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>& origin, const Vector3<double>& ray_to_pixel, double& min_dist, size_t& min_dist_sphere_num);
+    static bool Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>& origin, const Vector3<double>& ray_to_pixel, double& min_dist, size_t& min_dist_sphere_num, Vector3<double>& normal, Material& intersect_material);
 
-    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, std::vector<Sphere> &spheres, const Color& bg_color, double& dist, const std::vector<Light>& lights);
+    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, std::vector<Sphere> &spheres, const Color& bg_color, const std::vector<Light>& lights, size_t depth = 0);
 
 private:
     Vector3<double> center;
