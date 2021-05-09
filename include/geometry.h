@@ -1,7 +1,10 @@
 #ifndef RAYTRACING_GEOMETRY_H
 #define RAYTRACING_GEOMETRY_H
 
+#include <double_equal.h>
+
 #include <cmath>
+#include <cassert>
 
 template <typename T>
 class Vector3 {
@@ -31,6 +34,10 @@ public:
 
     Vector3 operator-(const Vector3& vec) const {
         return Vector3(x - vec.x, y - vec.y, z - vec.z);
+    }
+
+    Vector3 operator-() const {
+        return *this * (-1);
     }
 
     Vector3 normalized() const {
@@ -79,6 +86,25 @@ public:
         z = color.z;
 
         return *this;
+    }
+
+    // refract_index is ratio of external refract index to internal refract index
+    static Vector3<T> refract(const Vector3<T>& vec, const Vector3<T>& normal, double refract_index) {
+        assert(Double_equal::is_equal(1, vec.len()));
+        assert(Double_equal::is_equal(1, normal.len()));
+
+        Vector3 true_normal = normal;
+
+        double vec_normal_cos = -vec * normal;
+        if (vec_normal_cos < 0) {
+            vec_normal_cos = -vec_normal_cos;
+            true_normal = -normal;
+            refract_index = 1 / refract_index;
+        }
+
+        double ref_vec_normal_cos = sqrt(1 - refract_index * (1 - vec_normal_cos * vec_normal_cos));
+
+        return vec * refract_index + true_normal * (refract_index * vec_normal_cos - ref_vec_normal_cos);
     }
 };
 

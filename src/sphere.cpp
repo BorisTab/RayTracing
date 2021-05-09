@@ -19,7 +19,7 @@
 //}
 
 Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray, std::vector<Sphere> &spheres, const Color& bg_color, const std::vector<Light>& lights, size_t depth) {
-     Vector3<double> normal(0, 0, 0);
+    Vector3<double> normal(0, 0, 0);
     double diffuse_light_intensity = 0;
     double specular_light_intensity = 0;
     size_t min_dist_sphere_num = 0;
@@ -31,9 +31,13 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
         auto dir_to_point = origin + dir_from_camera_to_point;
 
         auto reflected_ray_dir = ray.normalized().reflect_with(normal.normalized());
+        auto refracted_ray_dir = Vector3<double>::refract(ray.normalized(), normal.normalized(), intersect_material.refract_index);
+
         auto reflected_ray_origin = reflected_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
+        auto refracted_ray_origin = refracted_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
 
         Color reflected_color = Run_ray(reflected_ray_origin, reflected_ray_dir, spheres, bg_color, lights, depth + 1);
+        Color refracted_color = Run_ray(refracted_ray_origin, refracted_ray_dir, spheres, bg_color, lights, depth + 1);
 
         for (auto& light: lights) {
             auto light_dir_from_point_to_light = (light.position - dir_to_point);
@@ -44,8 +48,8 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
 
             double min_shadow_dist = std::numeric_limits<double>::max();
             Vector3<double> shadow_normal;
-//            size_t min_dist_sphere_num = 100;
             Material shad_mat;
+
             if (Scene_intersect(spheres, shadow_origin, light_dir_from_point_to_light, min_shadow_dist, min_dist_sphere_num, shadow_normal, shad_mat) && min_shadow_dist < light_dist) {
                 continue;
             }
@@ -57,7 +61,8 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
         return intersect_material.diffuse_color * intersect_material.albedo.x +
                intersect_material.diffuse_color * diffuse_light_intensity * intersect_material.albedo.y +
                Color(255, 255, 255) * specular_light_intensity * intersect_material.albedo.z +
-               reflected_color * intersect_material.reflectivity;
+               reflected_color * intersect_material.reflectivity +
+               refracted_color * intersect_material.refractivity;
     }
 
     return bg_color;
@@ -67,16 +72,21 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
 
 bool Sphere::Ray_intersect(const Vector3<double> &origin, const Vector3<double>& ray, double& dist_to_sphere, Vector3<double>& normal) const {
     Vector3<double> line_to_center = center - origin;
-
     double distance_from_center_to_ray = ray.parallelogram_area(line_to_center) / ray.len();
+    double min_dist = 0;
 
     if (distance_from_center_to_ray <= radius) {
-        if (line_to_center.cos(ray) < 0) {
+//        if (line_to_center.cos(ray) < 0) {
+//            return false;
+//        }
+
+        min_dist = line_to_center.len() * line_to_center.cos(ray) -
+                sqrt(radius * radius - distance_from_center_to_ray * distance_from_center_to_ray);
+        if (min_dist < 0) {
             return false;
         }
 
-        dist_to_sphere = line_to_center.len() * line_to_center.cos(ray) -
-                sqrt(radius * radius - distance_from_center_to_ray * distance_from_center_to_ray);
+        dist_to_sphere = min_dist;
         normal = ray.normalized() * dist_to_sphere - line_to_center;
     }
     else {
@@ -126,9 +136,9 @@ void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
 
     for (size_t y = 0; y < scene.Get_canvas().Height(); ++y) {
         for (size_t x = 0; x < scene.Get_canvas().Width(); ++x) {
-//            if (y == 425 && x == 1170) {
-//                printf("a\n");
-//            }
+            if (y == 700 && x == 800) {
+                printf("a\n");
+            }
 
             auto ray_to_pixel = scene.Ray_to_pixel_from_camera(x, y);
             double min_dist = std::numeric_limits<double>::max();
@@ -141,8 +151,8 @@ void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
             min_dist = std::numeric_limits<double>::max();
             pixels[y][x] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, pixels[y][x], scene.Get_lights());
 
-            if (y == 425 && x == 1170) {
-                pixels[y][x] = {0, 0, 0};
+            if (y == 700 && x == 800) {
+                pixels[y][x] = {255, 0, 0};
             }
         }
     }

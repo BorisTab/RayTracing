@@ -13,11 +13,12 @@ int main() {
     scene.Set_camera({0., 0., 0.}, 70/180. * M_PI);
     scene.Set_lights(lights);
 
-    Material mirror(Color(255, 255, 255), {0, 0, 1},1000, 0.8);
+    Material mirror(Color(255, 255, 255), {0, 0, 10},1000, 0.8, 1, 0);
+    Material glass(Color(153, 178, 204), {0, 0, 0.5},100, 0.1, 0.65, 0.8);
 
-    Sphere sphere1({-3,    0,   16},2, {Color(102, 0, 204), {0.5, 1, 0}, 10, 0});
-    Sphere sphere2({-1.0, -1.5, 12},2, mirror);
-    Sphere sphere3({ 1.5, -0.5, 18}, 3, {Color(255, 165, 0), {0.5, 1, 1}, 30, 0});
+    Sphere sphere1({-3,    0,   16},2, {Color(102, 0, 204), {0.5, 1, 0}, 10, 0, 1, 0});
+    Sphere sphere2({-1.5, -1.5, 12},2, glass);
+    Sphere sphere3({ 1.5, -0.5, 18}, 3, {Color(255, 165, 0), {0.5, 1, 1}, 30, 0, 1, 0});
     Sphere sphere4({7,    5,   18}, 4,  mirror);
 //
 //        Sphere sphere1({0, 0, 10},5, {Color(102, 0, 204), {0.3, 1, 0}, 10});
@@ -31,6 +32,18 @@ int main() {
     Sphere::Set_spheres_on_scene(scene, spheres);
 
     scene.Save_canvas_to_png("../pictures/pic1.png");
+
+//    Vector3<double> light(0.416025, 0.877058, 0);
+//    Vector3<double> normal(0, 1, 0);
+//
+//    auto refracted = Vector3<double>::refract(light.normalized(), normal, 0.75);
+//    printf("%g, %g, %g\n", refracted.x, refracted.y, refracted.z);
+//    printf("%g\n", -refracted.cos(normal));
+//
+////    -0.416025, -0.877058, 0
+//
+//    Vector3 vec = Vector3<double>(2, 3, 0).normalized();
+//    printf("%g, %g, %g\n", vec.x, vec.y, vec.z);
 
     return 0;
 }

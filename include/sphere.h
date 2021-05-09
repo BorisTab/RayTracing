@@ -7,12 +7,14 @@
 struct Material {
     Material() = default;
 
-    Material(const Color& color, const Vector3<double>& albedo, int specular_power, double reflectivity):
+    Material(const Color& color, const Vector3<double>& albedo, int specular_power, double reflectivity, double refract_index, double refractivity):
 
     diffuse_color(color),
     albedo(albedo),
     specular_power(specular_power),
-    reflectivity(reflectivity) {}
+    reflectivity(reflectivity),
+    refract_index(refract_index),
+    refractivity(refractivity) {}
 
     Color diffuse_color;
 
@@ -23,6 +25,8 @@ struct Material {
     Vector3<double> albedo;
     int specular_power;
     double reflectivity;
+    double refract_index;
+    double refractivity;
 };
 
 class Sphere {
