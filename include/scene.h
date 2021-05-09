@@ -18,6 +18,10 @@ public:
 
     void Set_lights(const std::vector<Light>& lights);
 
+    void Set_background_pic(const char* filepath, int desired_channels = 0);
+
+    std::vector<std::vector<Color>>& Get_background_pic();
+
     const std::vector<Light>& Get_lights();
 
     Canvas& Get_canvas();
@@ -29,8 +33,11 @@ public:
 
     int Save_canvas_to_png(const char* filepath);
 
+    Color Background_pixel(const Vector3<double>& ray_to_pixel) const;
+
 private:
     Canvas _canvas;
+    std::vector<std::vector<Color>> _background_pic;
 
     double _fov = 0; // vertical, in radians
     Vector3<double> _camera_pos;

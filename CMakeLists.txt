@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(INCLUDE_ROOT ${PROJECT_SOURCE_DIR}/include)
 set(TARGET_NAME rayTracing)
 
-add_compile_options(-Wall -Werror)
+add_compile_options(-Wall -Werror -O3)
 
 include_directories("/home/boris/libs/stb")
 

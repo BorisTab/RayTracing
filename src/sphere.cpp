@@ -18,7 +18,7 @@
 //    }
 //}
 
-Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray, std::vector<Sphere> &spheres, const Color& bg_color, const std::vector<Light>& lights, size_t depth) {
+Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray, std::vector<Sphere> &spheres, const Scene& scene, const std::vector<Light>& lights, size_t depth) {
     Vector3<double> normal(0, 0, 0);
     double diffuse_light_intensity = 0;
     double specular_light_intensity = 0;
@@ -36,8 +36,8 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
         auto reflected_ray_origin = reflected_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
         auto refracted_ray_origin = refracted_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
 
-        Color reflected_color = Run_ray(reflected_ray_origin, reflected_ray_dir, spheres, bg_color, lights, depth + 1);
-        Color refracted_color = Run_ray(refracted_ray_origin, refracted_ray_dir, spheres, bg_color, lights, depth + 1);
+        Color reflected_color = Run_ray(reflected_ray_origin, reflected_ray_dir, spheres, scene, lights, depth + 1);
+        Color refracted_color = Run_ray(refracted_ray_origin, refracted_ray_dir, spheres, scene, lights, depth + 1);
 
         for (auto& light: lights) {
             auto light_dir_from_point_to_light = (light.position - dir_to_point);
@@ -65,7 +65,8 @@ Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray,
                refracted_color * intersect_material.refractivity;
     }
 
-    return bg_color;
+
+    return scene.Background_pixel(ray);
 }
 
 //void Sphere
@@ -128,7 +129,25 @@ bool Sphere::Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>
         }
     }
 
-    return min_dist < std::numeric_limits<double>::max();
+//    double checkerboard_dist = std::numeric_limits<float>::max();
+    if (fabs(ray_to_pixel.y)>1e-3)  {
+        double d = -(origin.y-4)/ray_to_pixel.y; // the checkerboard plane has equation y = -4
+        Vector3<double> pt = origin + ray_to_pixel*d;
+        if (d>0 && fabs(pt.x)<10 && pt.z>10 && pt.z<30 && d<min_dist) {
+            min_dist = d;
+            auto hit = pt;
+            normal = Vector3<double>(0,-1,0);
+            intersect_material.albedo.x = 0.3;
+            intersect_material.albedo.y = 1;
+
+            Vector3<double> new_color_coef = (int(.5*hit.x+1000) + int(.5*hit.z)) & 1 ? Vector3<double>(1,1,1) : Vector3<double>(1, .7, .3);
+            intersect_material.diffuse_color = Color((new_color_coef.x * 255.), (new_color_coef.y * 255.), (new_color_coef.z * 255.));
+//            printf("%d, %d, %d\n", intersect_material.diffuse_color.x, intersect_material.diffuse_color.y, intersect_material.diffuse_color.z);
+//            intersect_material.diffuse_color = intersect_material.diffuse_color;
+        }
+    }
+
+    return min_dist < 1000000;
 }
 
 void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
@@ -136,9 +155,9 @@ void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
 
     for (size_t y = 0; y < scene.Get_canvas().Height(); ++y) {
         for (size_t x = 0; x < scene.Get_canvas().Width(); ++x) {
-            if (y == 700 && x == 800) {
-                printf("a\n");
-            }
+//            if (y == 700 && x == 800) {
+//                printf("a\n");
+//            }
 
             auto ray_to_pixel = scene.Ray_to_pixel_from_camera(x, y);
             double min_dist = std::numeric_limits<double>::max();
@@ -147,13 +166,15 @@ void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
             Material sphere_material;
 
             Scene_intersect(spheres, scene.Get_camera_pos(), ray_to_pixel, min_dist, min_dist_sphere_num, normal, sphere_material);
-
+            ray_to_pixel = ray_to_pixel.normalized();
             min_dist = std::numeric_limits<double>::max();
-            pixels[y][x] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, pixels[y][x], scene.Get_lights());
 
-            if (y == 700 && x == 800) {
-                pixels[y][x] = {255, 0, 0};
-            }
+//            printf("%d, %d, %d\n", scene.Get_background_pic()[bg_y][bg_x].x, scene.Get_background_pic()[bg_y][bg_x].y, scene.Get_background_pic()[bg_y][bg_x].z);
+            pixels[y][x] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
+
+//            if (y == 700 && x == 800) {
+//                pixels[y][x] = {255, 0, 0};
+//            }
         }
     }
 }

@@ -3,31 +3,7 @@
 
 #include <geometry.h>
 #include <scene.h>
-
-struct Material {
-    Material() = default;
-
-    Material(const Color& color, const Vector3<double>& albedo, int specular_power, double reflectivity, double refract_index, double refractivity):
-
-    diffuse_color(color),
-    albedo(albedo),
-    specular_power(specular_power),
-    reflectivity(reflectivity),
-    refract_index(refract_index),
-    refractivity(refractivity) {}
-
-    Color diffuse_color;
-
-    // albedo:
-    // x - ambient_coef
-    // y - diffuse_coef
-    // z - specular_coef
-    Vector3<double> albedo;
-    int specular_power;
-    double reflectivity;
-    double refract_index;
-    double refractivity;
-};
+#include <material.h>
 
 class Sphere {
 public:
@@ -47,7 +23,7 @@ private:
 
     static bool Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>& origin, const Vector3<double>& ray_to_pixel, double& min_dist, size_t& min_dist_sphere_num, Vector3<double>& normal, Material& intersect_material);
 
-    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, std::vector<Sphere> &spheres, const Color& bg_color, const std::vector<Light>& lights, size_t depth = 0);
+    Color Run_ray(const Vector3<double>& origin, const Vector3<double>& ray, std::vector<Sphere> &spheres, const Scene& scene, const std::vector<Light>& lights, size_t depth = 0);
 
 private:
     Vector3<double> center;
