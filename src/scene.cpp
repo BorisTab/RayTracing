@@ -82,5 +82,5 @@ Color Scene::Background_pixel(const Vector3<double> &ray_to_pixel) const {
     size_t bg_y = (1 - acos(Vector3<double>(0, ray_to_pixel.y, ray_to_pixel.z).normalized() * Vector3<double>(0, 1, 0)) / M_PI) *
             static_cast<double>(_background_pic.size());
 
-    return _background_pic[bg_y][bg_x];
+    return _background_pic[std::min(bg_y, _background_pic.size() - 1)][std::min(bg_x, _background_pic[0].size() - 1)];
 }

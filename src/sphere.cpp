@@ -129,7 +129,6 @@ bool Sphere::Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>
         }
     }
 
-//    double checkerboard_dist = std::numeric_limits<float>::max();
     if (fabs(ray_to_pixel.y)>1e-3)  {
         double d = -(origin.y-4)/ray_to_pixel.y; // the checkerboard plane has equation y = -4
         Vector3<double> pt = origin + ray_to_pixel*d;
@@ -142,8 +141,6 @@ bool Sphere::Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>
 
             Vector3<double> new_color_coef = (int(.5*hit.x+1000) + int(.5*hit.z)) & 1 ? Vector3<double>(1,1,1) : Vector3<double>(1, .7, .3);
             intersect_material.diffuse_color = Color((new_color_coef.x * 255.), (new_color_coef.y * 255.), (new_color_coef.z * 255.));
-//            printf("%d, %d, %d\n", intersect_material.diffuse_color.x, intersect_material.diffuse_color.y, intersect_material.diffuse_color.z);
-//            intersect_material.diffuse_color = intersect_material.diffuse_color;
         }
     }
 
