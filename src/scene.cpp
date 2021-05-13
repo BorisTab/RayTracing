@@ -27,7 +27,7 @@ void Scene::Set_background_pic(const char* filepath, int desired_channels) {
     int channels_in_file = 0;
     unsigned char* buffer = stbi_load(filepath, &width, &height, &channels_in_file, desired_channels);
 
-    printf("chnnels in file: %d, size: %d x %d\n", channels_in_file, width, height);
+    printf("channels in envmap file: %d, size: %d x %d\n", channels_in_file, width, height);
 
     _background_pic.resize(height);
     int pixel_pos_in_buffer = 0;

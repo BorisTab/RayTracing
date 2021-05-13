@@ -6,7 +6,7 @@
 #undef STB_IMAGE_WRITE_IMPLEMENTATION
 
 Canvas::Canvas(size_t height, size_t width, const Color &bg_color):
-    pixels(height, std::vector<Color>(width, bg_color)),
+    pixels(height * width, bg_color),
     _height(height),
     _width(width) {}
 
@@ -14,7 +14,7 @@ void Canvas::Setup(size_t height, size_t width, const Color &bg_color) {
     _height = height;
     _width = width;
 
-    pixels = std::vector(height, std::vector(width, bg_color));
+    pixels = std::vector(width * height, bg_color);
 }
 
 size_t Canvas::Height() const {
@@ -33,7 +33,7 @@ int Canvas::Save_to_png(const char *filepath) {
 
     for (size_t line = 0; line < _height; ++line) {
         for (size_t pixel_pos = 0; pixel_pos < _width; ++pixel_pos) {
-            auto& pixel = pixels[line][pixel_pos];
+            auto& pixel = pixels[line * _width + pixel_pos];
 
             row_data[row_position++] = pixel.x;
             row_data[row_position++] = pixel.y;

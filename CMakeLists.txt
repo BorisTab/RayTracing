@@ -11,7 +11,10 @@ add_compile_options(-Wall -Werror -O3)
 
 include_directories("/home/boris/libs/stb")
 
+find_package(Threads REQUIRED)
+
 add_executable(${TARGET_NAME} src/main.cpp)
 target_include_directories(${TARGET_NAME} PUBLIC ${INCLUDE_ROOT})
+target_link_libraries(${TARGET_NAME} Threads::Threads)
 
 add_subdirectory(src)

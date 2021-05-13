@@ -20,7 +20,7 @@ public:
     size_t Width() const;
 
 public:
-    std::vector<std::vector<Color>> pixels;
+    std::vector<Color> pixels;
 
 private:
     size_t _height = 0;

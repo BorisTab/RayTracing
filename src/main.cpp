@@ -3,7 +3,7 @@
 #include <scene.h>
 #include <sphere.h>
 
-int main() {
+int main(int argc, const char* argv[]) {
     std::vector<Light> lights = {Light({-20, 20, 20}, 0.5),
                                  Light({30, 50, -25}, 0.5),
 //                                 Light({-10, 30, 0}, 0.5)
@@ -23,7 +23,7 @@ int main() {
     Sphere sphere1({-3,    0,   16},2, purple_matt);
     Sphere sphere2({-1.5, -1.5, 12},2, glass);
     Sphere sphere3({ 1.5, -0.5, 18}, 3, orange_semi_matt);
-    Sphere sphere4({7,    5,   18}, 4,  mirror);
+    Sphere sphere4({ 7,    5,   18}, 4,  mirror);
 
     std::vector<Sphere> spheres;
     spheres.push_back(sphere1);

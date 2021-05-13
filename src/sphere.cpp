@@ -1,22 +1,8 @@
 #include <sphere.h>
 
 #include <iostream>
-
-//void
-
-//void Sphere::Set_on_scene(Scene &scene) {
-//    auto& pixels = scene.Get_canvas().pixels;
-//
-//    for (size_t y = 0; y < scene.Get_canvas().Height(); ++y) {
-//        for (size_t x = 0; x < scene.Get_canvas().Width(); ++x) {
-//            auto ray_to_pixel = scene.Ray_to_pixel_from_camera(x, y);
-//            double dist;
-//            std::vector<Sphere> spheres;
-//
-//            pixels[y][x] = Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, pixels[y][x], dist, scene.Get_lights());
-//        }
-//    }
-//}
+#include <limits>
+#include <future>
 
 Color Sphere::Run_ray(const Vector3<double> &origin, const Vector3<double> &ray, std::vector<Sphere> &spheres, const Scene& scene, const std::vector<Light>& lights, size_t depth) {
     Vector3<double> normal(0, 0, 0);
@@ -129,18 +115,16 @@ bool Sphere::Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>
         }
     }
 
-    if (fabs(ray_to_pixel.y)>1e-3)  {
-        double d = -(origin.y-4)/ray_to_pixel.y; // the checkerboard plane has equation y = -4
-        Vector3<double> pt = origin + ray_to_pixel*d;
-        if (d>0 && fabs(pt.x)<10 && pt.z>10 && pt.z<30 && d<min_dist) {
-            min_dist = d;
-            auto hit = pt;
+    if (fabs(ray_to_pixel.y) > 1e-3)  {
+        double plane_dist = -(origin.y-4)/ray_to_pixel.y; // the checkerboard plane has equation y = -4
+        Vector3<double> pt = origin + ray_to_pixel * plane_dist;
+        if (plane_dist > 0 && fabs(pt.x) < 10 && pt.z > 10 && pt.z < 30 && plane_dist < min_dist) {
+            min_dist = plane_dist;
             normal = Vector3<double>(0,-1,0);
             intersect_material.albedo.x = 0.3;
             intersect_material.albedo.y = 1;
 
-            Vector3<double> new_color_coef = (int(.5*hit.x+1000) + int(.5*hit.z)) & 1 ? Vector3<double>(1,1,1) : Vector3<double>(1, .7, .3);
-            intersect_material.diffuse_color = Color((new_color_coef.x * 255.), (new_color_coef.y * 255.), (new_color_coef.z * 255.));
+            intersect_material.diffuse_color = (int(.5 * pt.x + 1000) + int(.5 * pt.z)) & 1 ? Color(255, 255, 255) : Color(255, 179, 76);
         }
     }
 
@@ -148,30 +132,52 @@ bool Sphere::Scene_intersect(std::vector<Sphere>& spheres, const Vector3<double>
 }
 
 void Sphere::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
+    auto start = std::clock();
+
     auto& pixels = scene.Get_canvas().pixels;
+    int thread_num = 1;
+    size_t one_chunk = floor(scene.Get_canvas().Height() / 12) * scene.Get_canvas().Width();
 
-    for (size_t y = 0; y < scene.Get_canvas().Height(); ++y) {
-        for (size_t x = 0; x < scene.Get_canvas().Width(); ++x) {
-//            if (y == 700 && x == 800) {
-//                printf("a\n");
-//            }
+    std::vector<std::future<void>> work_lines(thread_num);
 
-            auto ray_to_pixel = scene.Ray_to_pixel_from_camera(x, y);
-            double min_dist = std::numeric_limits<double>::max();
-            size_t min_dist_sphere_num = 0;
-            Vector3<double> normal;
-            Material sphere_material;
+    for (int cur_thread = 0; cur_thread < thread_num; ++cur_thread) {
+        work_lines[cur_thread] = std::async(std::launch::async, [&scene, &spheres, &pixels, cur_thread, one_chunk, thread_num] () mutable {
+            size_t chunk_end = (cur_thread == thread_num - 1) ? scene.Get_canvas().Height() * scene.Get_canvas().Width() : (cur_thread + 1)  * one_chunk;
 
-            Scene_intersect(spheres, scene.Get_camera_pos(), ray_to_pixel, min_dist, min_dist_sphere_num, normal, sphere_material);
-            ray_to_pixel = ray_to_pixel.normalized();
-            min_dist = std::numeric_limits<double>::max();
+            for (size_t pixel_num = cur_thread * one_chunk; pixel_num < chunk_end; ++pixel_num) {
+                auto ray_to_pixel = scene.Ray_to_pixel_from_camera(pixel_num % scene.Get_canvas().Width(), pixel_num / scene.Get_canvas().Width());
+                double min_dist = std::numeric_limits<double>::max();
+                size_t min_dist_sphere_num = 0;
+                Vector3<double> normal;
+                Material sphere_material;
 
-//            printf("%d, %d, %d\n", scene.Get_background_pic()[bg_y][bg_x].x, scene.Get_background_pic()[bg_y][bg_x].y, scene.Get_background_pic()[bg_y][bg_x].z);
-            pixels[y][x] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
+                Scene_intersect(spheres, scene.Get_camera_pos(), ray_to_pixel, min_dist, min_dist_sphere_num, normal, sphere_material);
+                ray_to_pixel = ray_to_pixel.normalized();
+                min_dist = std::numeric_limits<double>::max();
 
-//            if (y == 700 && x == 800) {
-//                pixels[y][x] = {255, 0, 0};
-//            }
-        }
+                pixels[pixel_num] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
+            }
+        });
     }
+
+    for(auto& work_line: work_lines) {
+        work_line.wait();
+    }
+
+    auto time = (std::clock() - start) / (double) CLOCKS_PER_SEC;
+    printf("%g\n", time);
+
+    // for (size_t pixel_num = 0; pixel_num < scene.Get_canvas().Height() * scene.Get_canvas().Width(); ++pixel_num) {
+    //     auto ray_to_pixel = scene.Ray_to_pixel_from_camera(pixel_num % scene.Get_canvas().Width(), pixel_num / scene.Get_canvas().Width());
+    //     double min_dist = std::numeric_limits<double>::max();
+    //     size_t min_dist_sphere_num = 0;
+    //     Vector3<double> normal;
+    //     Material sphere_material;
+
+    //     Scene_intersect(spheres, scene.Get_camera_pos(), ray_to_pixel, min_dist, min_dist_sphere_num, normal, sphere_material);
+    //     ray_to_pixel = ray_to_pixel.normalized();
+    //     min_dist = std::numeric_limits<double>::max();
+
+    //     pixels[pixel_num] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
+    // }
 }
