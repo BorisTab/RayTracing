@@ -2,15 +2,21 @@
 #define RAYTRACING_SCENE_H
 
 #include <canvas.h>
+#include <memory>
 
 struct Light {
-    __device__ Light(const Vector3<double>& position, double intensity);
+    __device__ __host__ Light(const Vector3<double>& position, double intensity);
+
+//    Light(const Vector3<double>& position, double intensity);
+
 
     Vector3<double> position;
     double intensity;
 };
 
 struct Scene {
+    __host__ Scene() = default;
+
 //    void Set_canvas(size_t height, size_t width, const Color& bg_color);
 //
 //    void Set_camera(const Vector3<double>& camera_pos, double fov);
@@ -35,7 +41,7 @@ struct Scene {
 //    Color Background_pixel(const Vector3<double>& ray_to_pixel) const;
 
     Canvas _canvas;
-    std::vector<std::vector<Color>> _background_pic;
+    SimpleColor* _background_pic;
     size_t _background_pic_height;
     size_t _background_pic_width;
 
@@ -53,6 +59,8 @@ namespace SceneF {
     void Set_lights(Scene& scene, const std::vector<Light>& lights);
 
     void Set_background_pic(Scene& scene, const char* filepath, int desired_channels = 0);
+
+    void Delete_background_pic(Scene& scene);
 
     std::vector<std::vector<Color>>& Get_background_pic(Scene& scene);
 

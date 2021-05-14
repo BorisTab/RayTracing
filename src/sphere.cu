@@ -6,12 +6,14 @@
 #include <limits>
 #include <future>
 
+#define DIST_MAX 1000000000000000000000000000.
+
 __device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &origin, const Vector3<double> &ray, Sphere* spheres, size_t spheres_size, const Scene& scene, const Light* lights, size_t lights_size, size_t depth) {
     Vector3<double> normal;
     double diffuse_light_intensity = 0;
     double specular_light_intensity = 0;
     size_t min_dist_sphere_num = 0;
-    double dist = std::numeric_limits<double>::max();
+    double dist = DIST_MAX;
     Material intersect_material;
 
     if (depth <= 4 && Scene_intersect(spheres, spheres_size, origin, ray, dist, min_dist_sphere_num, normal, intersect_material)) {
@@ -34,7 +36,7 @@ __device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &o
 
             auto shadow_origin = light_dir_from_point_to_light * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
 
-            double min_shadow_dist = std::numeric_limits<double>::max();
+            double min_shadow_dist = DIST_MAX;
             Vector3<double> shadow_normal;
             Material shad_mat;
 
@@ -42,8 +44,8 @@ __device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &o
                 continue;
             }
 
-            diffuse_light_intensity += lights[light_num].intensity * std::max(0., light_dir_from_point_to_light * Vec3::normalize(normal));
-            specular_light_intensity += lights[light_num].intensity * pow(std::max(0., Vec3::reflect(light_dir_from_point_to_light, normal) * ray), intersect_material.specular_power);
+            diffuse_light_intensity += lights[light_num].intensity * max(0., light_dir_from_point_to_light * Vec3::normalize(normal));
+            specular_light_intensity += lights[light_num].intensity * pow(max(0., Vec3::reflect(light_dir_from_point_to_light, normal) * ray), intersect_material.specular_power);
         }
 
         SimpleColor white_color = {255, 255, 255};
@@ -82,7 +84,7 @@ __device__ bool SphereF::Ray_intersect(Sphere& sphere, const Vector3<double> &or
         Vec3::copy_vec(Vec3::normalize(ray) * dist_to_sphere - line_to_center, normal);
     }
     else {
-        distance_from_center_to_ray = std::numeric_limits<double>::max();
+        distance_from_center_to_ray = DIST_MAX;
     }
 
     return distance_from_center_to_ray < sphere.radius;
@@ -150,7 +152,7 @@ void SphereF::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
     auto& pixels = scene._canvas.pixels;
     size_t num_of_pixels = scene._canvas._height * scene._canvas._width;
 
-    Color* d_canvas = nullptr; 
+    SimpleColor* d_canvas = nullptr;
     checkCudaErrors(cudaMalloc((void**)&d_canvas, sizeof(Color) * num_of_pixels));
     checkCudaErrors(cudaMemcpy(d_canvas, &pixels.front(), sizeof(Color) * num_of_pixels, cudaMemcpyHostToDevice));
 
@@ -171,6 +173,8 @@ void SphereF::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
 
     //     pixels[pixel_num] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
     // }
+
+    Cuda::Cuda_canvas_intersect<<<gridSize, blockSize>>>(d_canvas, scene, &spheres.front(), spheres.size(), DIST_MAX, &scene._lights.front(), scene._lights.size());
 
     cudaFree(d_canvas);
 

@@ -4,7 +4,7 @@
 struct Material {
 //    Material():
 //            diffuse_color(),
-//            albedo(0, 1, 0),
+//            albedo({0, 1, 0}),
 //            specular_power(1),
 //            reflectivity(0),
 //            refract_index(1),
@@ -32,7 +32,7 @@ struct Material {
 };
 
 namespace MaterialF {
-    void MaterialConstructDefault(Material& material) {
+    static void MaterialConstructDefault(Material& material) {
         material.albedo[0] = 0;
         material.albedo[1] = 1;
         material.albedo[2] = 0;
@@ -42,7 +42,7 @@ namespace MaterialF {
         material.refractivity = 0;
     }
 
-    void MaterialConstruct(Material& material, const SimpleColor& color, const double albedo[3], int specular_power, double reflectivity, double refract_index, double refractivity) {
+    static void MaterialConstruct(Material& material, const SimpleColor& color, const double albedo[3], int specular_power, double reflectivity, double refract_index, double refractivity) {
         material.diffuse_color = color;
         material.albedo[0] = albedo[0];
         material.albedo[1] = albedo[1];

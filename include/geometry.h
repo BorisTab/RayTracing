@@ -13,31 +13,31 @@ public:
     T y = 0;
     T z = 0;
 
-//    Vector3() = default;
-//
-    __device__ Vector3(const T& x, const T& y, const T& z):
+    __device__ __host__ Vector3() = default;
+
+    __device__ __host__ Vector3(const T& x, const T& y, const T& z):
             x(x),
             y(y),
             z(z) {}
 
-    Vector3 operator+(const Vector3& vec) const {
-        return Vector3(x + vec.x, y + vec.y, z + vec.z);
-    }
+//    Vector3 operator+(const Vector3& vec) const {
+//        return Vector3(x + vec.x, y + vec.y, z + vec.z);
+//    }
 
-    T operator*(const Vector3& vec) const {
-        return x * vec.x + y * vec.y + z * vec.z;
-    }
+//    T operator*(const Vector3& vec) const {
+//        return x * vec.x + y * vec.y + z * vec.z;
+//    }
 
-    Vector3 operator*(const T scalar) const {
-        return Vector3(x * scalar, y * scalar, z * scalar);
-    }
-
-    Vector3 operator-(const Vector3& vec) const {
-        return Vector3(x - vec.x, y - vec.y, z - vec.z);
-    }
+//    Vector3 operator*(const T scalar) const {
+//        return Vector3(x * scalar, y * scalar, z * scalar);
+//    }
+//
+//    Vector3 operator-(const Vector3& vec) const {
+//        return Vector3(x - vec.x, y - vec.y, z - vec.z);
+//    }
 
     Vector3 operator-() const {
-        return *this * (-1);
+        return *this * (-1.);
     }
 
     Vector3 normalized() const {
@@ -138,25 +138,32 @@ namespace Vec3 {
     }
 
     template <typename T>
+    __device__ void copy_vec(const Vector3<T>& from, Vector3<T>& to) {
+        to.x = from.x;
+        to.y = from.y;
+        to.z = from.z;
+    }
+
+    template <typename T>
     __device__ double len(const Vector3<T>& vec) {
         return std::sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
     }
 
     template <typename T>
     __device__ Vector3<T> normalize(const Vector3<T>& vec) {
-        return Vector3<T>(vec.x / vec.len(), vec.y / vec.len(), vec.z / vec.len());
+        return Vector3<T>(vec.x / len(vec), vec.y / len(vec), vec.z / len(vec));
     }
 
     template <typename T>
-    __device__ void normalize_self(const Vector3<T>& vec) {
-        vec.x /= vec.len();
-        vec.y /= vec.len();
-        vec.z /= vec.len();
+    __device__ void normalize_self(Vector3<T>& vec) {
+        vec.x /= len(vec);
+        vec.y /= len(vec);
+        vec.z /= len(vec);
     }
 
     template <typename T>
     __device__ Vector3<T> reflect(const Vector3<T>& vec, const Vector3<T>& normal) {
-        return vec - normal.normalized() * 2 * len(vec) * cos(normal);
+        return vec - normalize(normal) * 2. * len(vec) * (normalize(vec) * normalize(normal));
     }
 
     template <typename T>
@@ -164,23 +171,16 @@ namespace Vec3 {
 
         Vector3<T> true_normal = normal;
 
-        double vec_normal_cos = -vec * normal;
+        double vec_normal_cos = vec * -1. * normal;
         if (vec_normal_cos < 0) {
             vec_normal_cos = -vec_normal_cos;
-            true_normal = -normal;
+            Vec3::copy_vec(normal * -1., true_normal);
             refract_index = 1 / refract_index;
         }
 
         double ref_vec_normal_cos = sqrt(1 - refract_index * (1 - vec_normal_cos * vec_normal_cos));
 
         return vec * refract_index + true_normal * (refract_index * vec_normal_cos - ref_vec_normal_cos);
-    }
-
-    template <typename T>
-    __device__ void copy_vec(const Vector3<T>& from, Vector3<T>& to) {
-        to.x = from.x;
-        to.y = from.y;
-        to.z = from.z;
     }
 
     template <typename T>
@@ -198,7 +198,7 @@ struct SimpleColor {
     unsigned char b = 0;
 };
 
-__device__ SimpleColor operator*(SimpleColor& color, const double scalar) {
+__device__ static SimpleColor operator*(SimpleColor& color, const double scalar) {
     color.r = (double)color.r * scalar;
     color.g = (double)color.r * scalar;
     color.b = (double)color.r * scalar;
@@ -206,7 +206,7 @@ __device__ SimpleColor operator*(SimpleColor& color, const double scalar) {
     return color;
 }
 
-__device__ SimpleColor operator*(SimpleColor&& color, const double scalar) {
+__device__ static SimpleColor operator*(SimpleColor&& color, const double scalar) {
     color.r = (double)color.r * scalar;
     color.g = (double)color.r * scalar;
     color.b = (double)color.r * scalar;
@@ -214,7 +214,7 @@ __device__ SimpleColor operator*(SimpleColor&& color, const double scalar) {
     return color;
 }
 
-__device__ SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2) {
+__device__ static SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2) {
     color1.r += color2.r;
     color1.g += color2.g;
     color1.b += color2.b;
@@ -222,7 +222,7 @@ __device__ SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2)
     return color1;
 }
 
-__device__ SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2) {
+__device__ static SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2) {
     color1.r += color2.r;
     color1.g += color2.g;
     color1.b += color2.b;
@@ -230,7 +230,7 @@ __device__ SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2
     return color1;
 }
 
-__device__ void copy_simple_color(const SimpleColor& from, SimpleColor& to) {
+__device__ static void copy_simple_color(const SimpleColor& from, SimpleColor& to) {
     to.r = from.r;
     to.g = from.g;
     to.b = from.b;

@@ -6,10 +6,10 @@
 #include <material.h>
 
 struct Sphere {
-//    Sphere(const Vector3<double>& center, size_t radius, const Material& material):
-//        center(center.x, -center.y, center.z),
-//        radius(radius),
-//        material(material) {}
+    Sphere(const Vector3<double>& center, size_t radius, const Material& material):
+        center(center.x, -center.y, center.z),
+        radius(radius),
+        material(material) {}
 //
 ////    void Set_on_scene(Scene& scene);
 //

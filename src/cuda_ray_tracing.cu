@@ -21,6 +21,4 @@ __global__ void Cuda::Cuda_canvas_intersect(SimpleColor* d_canvas, Scene& scene,
     min_dist = double_max;
 
     copy_simple_color(SphereF::Run_ray(spheres[min_dist_sphere_num], scene._camera_pos, Vec3::normalize(ray_to_pixel), spheres, spheres_size, scene, lights, lights_size), d_canvas[pixel_num]);
-//    d_canvas[pixel_num] = SphereF::Run_ray(spheres[min_dist_sphere_num], scene._camera_pos, Vec3::normalize(ray_to_pixel), spheres, scene, lights);
-    // }
 }

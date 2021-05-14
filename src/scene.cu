@@ -4,9 +4,13 @@
 #include <stb/stb_image.h>
 #undef STB_IMAGE_IMPLEMENTATION
 
-__device__ Light::Light(const Vector3<double> &position, double intensity):
+__device__ __host__ Light::Light(const Vector3<double> &position, double intensity):
     position(position.x, -position.y, position.z),
     intensity(intensity) {}
+
+//Light::Light(const Vector3<double> &position, double intensity):
+//        position(position.x, -position.y, position.z),
+//        intensity(intensity) {}
 
 void SceneF::Set_canvas(Scene& scene, size_t height, size_t width, const Color &bg_color) {
     CanvasF::Setup(scene._canvas, height, width, bg_color);
@@ -29,21 +33,21 @@ void SceneF::Set_background_pic(Scene& scene, const char* filepath, int desired_
 
     printf("channels in envmap file: %d, size: %d x %d\n", channels_in_file, width, height);
 
-    scene._background_pic.resize(height);
+    scene._background_pic = new SimpleColor[width * height];
     int pixel_pos_in_buffer = 0;
-    for (int line_num = 0; line_num < height; ++line_num) {
-        scene._background_pic[line_num].resize(width);
-
-        for (int pixel_pos = 0; pixel_pos < width; ++pixel_pos) {
+    for (int pix_num = 0; pix_num < height * width; ++pix_num) {
             pixel_pos_in_buffer += 3;
-            scene._background_pic[line_num][pixel_pos] = Color(buffer[pixel_pos_in_buffer], buffer[pixel_pos_in_buffer + 1], buffer[pixel_pos_in_buffer + 2]);
-        }
+            scene._background_pic[pix_num] = {buffer[pixel_pos_in_buffer], buffer[pixel_pos_in_buffer + 1], buffer[pixel_pos_in_buffer + 2]};
     }
 
     scene._background_pic_height = height;
     scene._background_pic_width = width;
 
     stbi_image_free(buffer);
+}
+
+void SceneF::Delete_background_pic(Scene &scene) {
+    delete[](scene._background_pic);
 }
 
 //std::vector<std::vector<Color>> & Scene::Get_background_pic() {
@@ -94,5 +98,10 @@ __device__ SimpleColor SceneF::Background_pixel(const Scene& scene, const Vector
     size_t bg_y = (1 - acos(Vec3::normalize(yz_vector) * y_vector) / M_PI) *
             static_cast<double>(scene._background_pic_height);
 
-    return scene._background_pic[std::min(bg_y, scene._background_pic_height - 1)][std::min(bg_x, scene._background_pic_width - 1)];
+    bg_x = min(bg_x, scene._background_pic_width - 1);
+    bg_y = min(bg_y, scene._background_pic_height - 1);
+
+    size_t pix_num = bg_y * scene._background_pic_width + bg_x;
+
+    return scene._background_pic[pix_num];
 }

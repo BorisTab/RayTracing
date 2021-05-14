@@ -10,15 +10,27 @@ int main(int argc, const char* argv[]) {
     };
 
     Scene scene;
-    scene.Set_canvas(1080, 1920, {127, 199, 255});
-    scene.Set_camera({0., 0., 0.}, 70/180. * M_PI);
-    scene.Set_lights(lights);
-    scene.Set_background_pic("../pictures/envmap.jpg");
+    SceneF::Set_canvas(scene, 1080, 1920, {127, 199, 255});
+    SceneF::Set_camera(scene, {0., 0., 0.}, 70/180. * M_PI);
+    SceneF::Set_lights(scene, lights);
+    SceneF::Set_background_pic(scene, "../pictures/envmap.jpg");
 
-    Material mirror(Color(255, 255, 255), {0, 0, 10},1000, 0.8, 1, 0);
-    Material glass(Color(153, 178, 204), {0, 0, 0.6},100, 0.1, 0.5, 0.8);
-    Material purple_matt(Color(102, 0, 204), {0.5, 1, 0.1}, 10, 0, 1, 0);
-    Material orange_semi_matt(Color(255, 165, 0), {0.5, 1, 1}, 30, 0.05, 1, 0);
+    Material mirror;
+    double mirror_albedo[3] = {0., 0., 10.};
+    MaterialF::MaterialConstruct(mirror, {255, 255, 255}, mirror_albedo, 1000, 0.8, 1, 0);
+
+    Material glass;
+    double glass_albedo[3] = {0, 0, 0.6};
+    MaterialF::MaterialConstruct(glass, {153, 178, 204}, glass_albedo, 100, 0.1, 0.5, 0.8);
+
+    Material purple_matt;
+    double purple_matt_albedo[3] = {0.5, 1, 0.1};
+    MaterialF::MaterialConstruct(purple_matt, {102, 0, 204}, purple_matt_albedo, 10, 0, 1, 0);
+
+
+    Material orange_semi_matt;
+    double orange_semi_matt_albedo[3] = {0.5, 1, 1};
+    MaterialF::MaterialConstruct(orange_semi_matt, {255, 165, 0}, orange_semi_matt_albedo, 30, 0.05, 1, 0);
 
     Sphere sphere1({-3,    0,   16},2, purple_matt);
     Sphere sphere2({-1.5, -1.5, 12},2, glass);
@@ -31,9 +43,9 @@ int main(int argc, const char* argv[]) {
     spheres.push_back(sphere3);
     spheres.push_back(sphere4);
 
-    Sphere::Set_spheres_on_scene(scene, spheres);
+    SphereF::Set_spheres_on_scene(scene, spheres);
 
-    scene.Save_canvas_to_png("../pictures/pic1.png");
+    SceneF::Save_canvas_to_png(scene, "../pictures/pic1.png");
 
     return 0;
 }
