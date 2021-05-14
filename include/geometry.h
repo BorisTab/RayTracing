@@ -13,9 +13,9 @@ public:
     T y = 0;
     T z = 0;
 
-    Vector3() = default;
-
-    Vector3(const T& x, const T& y, const T& z):
+//    Vector3() = default;
+//
+    __device__ Vector3(const T& x, const T& y, const T& z):
             x(x),
             y(y),
             z(z) {}
@@ -108,9 +108,140 @@ public:
     }
 };
 
+template <typename T>
+__device__ Vector3<T> operator*(const Vector3<T>& vec, const T scalar) {
+    return Vector3<T>(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+}
+
+template <typename T>
+__device__ T operator*(const Vector3<T>& vec1, const Vector3<T>& vec2) {
+    return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+}
+
+
+template <typename T>
+__device__  Vector3<T> operator+(const Vector3<T>& vec1, const Vector3<T>& vec2) {
+    return Vector3<T>(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
+}
+
+template <typename T>
+__device__  Vector3<T> operator-(const Vector3<T>& vec1, const Vector3<T>& vec2) {
+    return Vector3<T>(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
+}
+
+namespace Vec3 {
+    template <typename T>
+    __device__ void set_val(Vector3<T>& vec, T x, T y, T z) {
+        vec.x = x;
+        vec.y = y;
+        vec.z = z;
+    }
+
+    template <typename T>
+    __device__ double len(const Vector3<T>& vec) {
+        return std::sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
+    }
+
+    template <typename T>
+    __device__ Vector3<T> normalize(const Vector3<T>& vec) {
+        return Vector3<T>(vec.x / vec.len(), vec.y / vec.len(), vec.z / vec.len());
+    }
+
+    template <typename T>
+    __device__ void normalize_self(const Vector3<T>& vec) {
+        vec.x /= vec.len();
+        vec.y /= vec.len();
+        vec.z /= vec.len();
+    }
+
+    template <typename T>
+    __device__ Vector3<T> reflect(const Vector3<T>& vec, const Vector3<T>& normal) {
+        return vec - normal.normalized() * 2 * len(vec) * cos(normal);
+    }
+
+    template <typename T>
+    __device__ Vector3<T> refract(const Vector3<T>& vec, const Vector3<T>& normal, double refract_index) {
+
+        Vector3<T> true_normal = normal;
+
+        double vec_normal_cos = -vec * normal;
+        if (vec_normal_cos < 0) {
+            vec_normal_cos = -vec_normal_cos;
+            true_normal = -normal;
+            refract_index = 1 / refract_index;
+        }
+
+        double ref_vec_normal_cos = sqrt(1 - refract_index * (1 - vec_normal_cos * vec_normal_cos));
+
+        return vec * refract_index + true_normal * (refract_index * vec_normal_cos - ref_vec_normal_cos);
+    }
+
+    template <typename T>
+    __device__ void copy_vec(const Vector3<T>& from, Vector3<T>& to) {
+        to.x = from.x;
+        to.y = from.y;
+        to.z = from.z;
+    }
+
+    template <typename T>
+    __device__ double parallelogram_area(const Vector3<T>& vec1, const Vector3<T>& vec2)  {
+        double cosine = normalize(vec1) * normalize(vec2);
+        double sinus = sqrt(1 - cosine * cosine);
+
+        return len(vec1) * len(vec2) * sinus;
+    }
+}
+
+struct SimpleColor {
+    unsigned char r = 0;
+    unsigned char g = 0;
+    unsigned char b = 0;
+};
+
+__device__ SimpleColor operator*(SimpleColor& color, const double scalar) {
+    color.r = (double)color.r * scalar;
+    color.g = (double)color.r * scalar;
+    color.b = (double)color.r * scalar;
+
+    return color;
+}
+
+__device__ SimpleColor operator*(SimpleColor&& color, const double scalar) {
+    color.r = (double)color.r * scalar;
+    color.g = (double)color.r * scalar;
+    color.b = (double)color.r * scalar;
+
+    return color;
+}
+
+__device__ SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2) {
+    color1.r += color2.r;
+    color1.g += color2.g;
+    color1.b += color2.b;
+
+    return color1;
+}
+
+__device__ SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2) {
+    color1.r += color2.r;
+    color1.g += color2.g;
+    color1.b += color2.b;
+
+    return color1;
+}
+
+__device__ void copy_simple_color(const SimpleColor& from, SimpleColor& to) {
+    to.r = from.r;
+    to.g = from.g;
+    to.b = from.b;
+}
+
 class Color: public Vector3<unsigned char> {
 public:
     Color(): Vector3<unsigned char>() {}
+
+    Color(const SimpleColor& simpleColor):
+    Vector3<unsigned char>(simpleColor.r, simpleColor.r, simpleColor.b) {}
 
     Color(unsigned char r, unsigned char g, unsigned char b):
             Vector3<unsigned char>(r, g, b) {}
@@ -126,9 +257,9 @@ public:
 
     Color operator+(const Color& color) {
         Color newColor;
-        newColor.x = std::min(255, x + color.x);
-        newColor.y = std::min(255, y + color.y);
-        newColor.z = std::min(255, z + color.z);
+        newColor.x = std::fmin(255, x + color.x);
+        newColor.y = std::fmin(255, y + color.y);
+        newColor.z = std::fmin(255, z + color.z);
 
         return newColor;
     }
@@ -145,7 +276,7 @@ public:
 //    }
 
     Color operator*(const double intensity) {
-        return Color(std::min(255., x * intensity), std::min(255., y * intensity), std::min(255., z * intensity));
+        return Color(std::fmin(255., x * intensity), std::fmin(255., y * intensity), std::fmin(255., z * intensity));
     }
 };
 
@@ -170,15 +301,15 @@ public:
             zeroPoint(vec) {}
 
     Vector3<T> makeVec(T x, T y, T z) const {
-        return Vector3(x - zeroPoint.x, zeroPoint.y - y, z - zeroPoint.z);
+        return Vector3<T>(x - zeroPoint.x, zeroPoint.y - y, z - zeroPoint.z);
     }
 
     Vector3<T> makeVec(const Vector3<T>& vec) const {
-        return Vector3(vec.x - zeroPoint.x, zeroPoint.y - vec.y, vec.z - zeroPoint.z);
+        return Vector3<T>(vec.x - zeroPoint.x, zeroPoint.y - vec.y, vec.z - zeroPoint.z);
     }
 
     Vector3<T> gridPos(const Vector3<T>& vec) const {
-        return Vector3(vec.x + zeroPoint.x, zeroPoint.y - vec.y, vec.z + zeroPoint.z);
+        return Vector3<T>(vec.x + zeroPoint.x, zeroPoint.y - vec.y, vec.z + zeroPoint.z);
     }
 };
 
