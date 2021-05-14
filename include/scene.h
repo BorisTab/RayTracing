@@ -60,7 +60,7 @@ namespace SceneF {
 
     void Set_background_pic(Scene& scene, const char* filepath, int desired_channels = 0);
 
-    void Delete_background_pic(Scene& scene);
+    void Delete_scene(Scene& scene);
 
     std::vector<std::vector<Color>>& Get_background_pic(Scene& scene);
 

@@ -14,7 +14,11 @@ void CanvasF::Setup(Canvas& canvas, size_t height, size_t width, const Color &bg
     canvas._height = height;
     canvas._width = width;
 
-    canvas.pixels = std::vector<Color>(width * height, bg_color);
+    canvas.pixels = new uchar3[width * height];
+}
+
+void CanvasF::Delete_canvas(Canvas &canvas) {
+    delete[] (canvas.pixels);
 }
 
 //size_t Canvas::Height() const {

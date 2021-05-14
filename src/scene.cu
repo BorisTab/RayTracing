@@ -46,8 +46,9 @@ void SceneF::Set_background_pic(Scene& scene, const char* filepath, int desired_
     stbi_image_free(buffer);
 }
 
-void SceneF::Delete_background_pic(Scene &scene) {
+void SceneF::Delete_scene(Scene &scene) {
     delete[](scene._background_pic);
+    CanvasF::Delete_canvas(scene._canvas);
 }
 
 //std::vector<std::vector<Color>> & Scene::Get_background_pic() {

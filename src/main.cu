@@ -10,7 +10,7 @@ int main(int argc, const char* argv[]) {
     };
 
     Scene scene;
-    SceneF::Set_canvas(scene, 1080, 1920, {127, 199, 255});
+    SceneF::Set_canvas(scene, 9, 16, {127, 199, 255});
     SceneF::Set_camera(scene, {0., 0., 0.}, 70/180. * M_PI);
     SceneF::Set_lights(scene, lights);
     SceneF::Set_background_pic(scene, "../pictures/envmap.jpg");
@@ -46,6 +46,7 @@ int main(int argc, const char* argv[]) {
     SphereF::Set_spheres_on_scene(scene, spheres);
 
     SceneF::Save_canvas_to_png(scene, "../pictures/pic1.png");
+    SceneF::Delete_scene(scene);
 
     return 0;
 }

@@ -8,7 +8,7 @@
 
 #define DIST_MAX 1000000000000000000000000000.
 
-__device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &origin, const Vector3<double> &ray, Sphere* spheres, size_t spheres_size, const Scene& scene, const Light* lights, size_t lights_size, size_t depth) {
+__device__ uchar3 SphereF::Run_ray(Sphere& sphere, const Vector3<double> &origin, const Vector3<double> &ray, Sphere* spheres, size_t spheres_size, const Scene& scene, const Light* lights, size_t lights_size, size_t depth) {
     Vector3<double> normal;
     double diffuse_light_intensity = 0;
     double specular_light_intensity = 0;
@@ -26,8 +26,8 @@ __device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &o
         auto reflected_ray_origin = reflected_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
         auto refracted_ray_origin = refracted_ray_dir * normal < 0 ?  dir_to_point - normal * 1e-3 : dir_to_point + normal * 1e-3;
 
-        SimpleColor reflected_color = Run_ray(sphere, reflected_ray_origin, reflected_ray_dir, spheres, spheres_size, scene, lights, lights_size, depth + 1);
-        SimpleColor refracted_color = Run_ray(sphere, refracted_ray_origin, refracted_ray_dir, spheres, spheres_size, scene, lights, lights_size, depth + 1);
+        uchar3 reflected_color = Run_ray(sphere, reflected_ray_origin, reflected_ray_dir, spheres, spheres_size, scene, lights, lights_size, depth + 1);
+        uchar3 refracted_color = Run_ray(sphere, refracted_ray_origin, refracted_ray_dir, spheres, spheres_size, scene, lights, lights_size, depth + 1);
 
         for (int light_num = 0; light_num < lights_size; ++light_num) {
             auto light_dir_from_point_to_light = (lights[light_num].position - dir_to_point);
@@ -48,18 +48,19 @@ __device__ SimpleColor SphereF::Run_ray(Sphere& sphere, const Vector3<double> &o
             specular_light_intensity += lights[light_num].intensity * pow(max(0., Vec3::reflect(light_dir_from_point_to_light, normal) * ray), intersect_material.specular_power);
         }
 
-        SimpleColor white_color = {255, 255, 255};
-        SimpleColor out_color = intersect_material.diffuse_color;
+        uchar3 white_color = {255, 255, 255};
+//        SimpleColor out_color = intersect_material.diffuse_color;
 
-        return out_color * intersect_material.albedo[0] +
-               out_color * diffuse_light_intensity * intersect_material.albedo[1] +
-               white_color * specular_light_intensity * intersect_material.albedo[2] +
-               reflected_color * intersect_material.reflectivity +
-               refracted_color * intersect_material.refractivity;
+        return white_color;
+//        return out_color * intersect_material.albedo[0] +
+//               out_color * diffuse_light_intensity * intersect_material.albedo[1] +
+//               white_color * specular_light_intensity * intersect_material.albedo[2] +
+//               reflected_color * intersect_material.reflectivity +
+//               refracted_color * intersect_material.refractivity;
     }
 
-
-    return SceneF::Background_pixel(scene, ray);
+    uchar3 white_color = {255, 255, 255};
+    return white_color;//SceneF::Background_pixel(scene, ray);
 }
 
 //void Sphere
@@ -147,36 +148,27 @@ __device__ bool SphereF::Scene_intersect(Sphere* spheres, size_t spheres_size, c
 void SphereF::Set_spheres_on_scene(Scene &scene, std::vector<Sphere> &spheres) {
     auto start = std::clock();
 
-    cudaSetDevice(0);
+    checkCudaErrors(cudaSetDevice(0));
 
-    auto& pixels = scene._canvas.pixels;
+    auto* pixels = scene._canvas.pixels;
     size_t num_of_pixels = scene._canvas._height * scene._canvas._width;
 
-    SimpleColor* d_canvas = nullptr;
-    checkCudaErrors(cudaMalloc((void**)&d_canvas, sizeof(Color) * num_of_pixels));
-    checkCudaErrors(cudaMemcpy(d_canvas, &pixels.front(), sizeof(Color) * num_of_pixels, cudaMemcpyHostToDevice));
+    uchar3* d_canvas = nullptr;
+    checkCudaErrors(cudaMalloc(&d_canvas, sizeof(uchar3) * num_of_pixels));
+    checkCudaErrors(cudaMemcpy(d_canvas, pixels, sizeof(uchar3) * num_of_pixels, cudaMemcpyHostToDevice));
 
-    size_t threadNum = 1024;
+    size_t threadNum = 32;
     dim3 blockSize(threadNum, 1, 1);
-    dim3 gridSize(scene._canvas._width / threadNum + 1, scene._canvas._width, 1);
-
-    // for (size_t pixel_num = 0; pixel_num < scene.Get_canvas().Height() * scene.Get_canvas().Width(); ++pixel_num) {
-    //     auto ray_to_pixel = scene.Ray_to_pixel_from_camera(pixel_num % scene.Get_canvas().Width(), pixel_num / scene.Get_canvas().Width());
-    //     double min_dist = std::numeric_limits<double>::max();
-    //     size_t min_dist_sphere_num = 0;
-    //     Vector3<double> normal;
-    //     Material sphere_material;
-
-    //     Scene_intersect(spheres, scene.Get_camera_pos(), ray_to_pixel, min_dist, min_dist_sphere_num, normal, sphere_material);
-    //     ray_to_pixel = ray_to_pixel.normalized();
-    //     min_dist = std::numeric_limits<double>::max();
-
-    //     pixels[pixel_num] = spheres[min_dist_sphere_num].Run_ray(scene.Get_camera_pos(), ray_to_pixel, spheres, scene, scene.Get_lights());
-    // }
+    dim3 gridSize(scene._canvas._width / threadNum + 1, scene._canvas._height, 1);
 
     Cuda::Cuda_canvas_intersect<<<gridSize, blockSize>>>(d_canvas, scene, &spheres.front(), spheres.size(), DIST_MAX, &scene._lights.front(), scene._lights.size());
+    checkCudaErrors(cudaGetLastError());
 
-    cudaFree(d_canvas);
+    cudaDeviceSynchronize();
+    checkCudaErrors(cudaGetLastError());
+
+//    checkCudaErrors(cudaMemcpy(pixels, d_canvas, sizeof(SimpleColor) * num_of_pixels, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaFree(d_canvas));
 
     auto time = (std::clock() - start) / (double) CLOCKS_PER_SEC;
     printf("%g\n", time);

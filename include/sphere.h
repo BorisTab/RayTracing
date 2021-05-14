@@ -44,7 +44,7 @@ namespace SphereF {
 
     __device__ bool Scene_intersect(Sphere* spheres, size_t spheres_size, const Vector3<double>& origin, const Vector3<double>& ray_to_pixel, double& min_dist, size_t& min_dist_sphere_num, Vector3<double>& normal, Material& intersect_material);
 
-    __device__ SimpleColor Run_ray(Sphere& sphere, const Vector3<double>& origin, const Vector3<double>& ray, Sphere* spheres, size_t spheres_size, const Scene& scene, const Light* lights, size_t lights_size, size_t depth = 0);
+    __device__ uchar3 Run_ray(Sphere& sphere, const Vector3<double>& origin, const Vector3<double>& ray, Sphere* spheres, size_t spheres_size, const Scene& scene, const Light* lights, size_t lights_size, size_t depth = 0);
 }
 
 #endif //RAYTRACING_SPHERE_H
