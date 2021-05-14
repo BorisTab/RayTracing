@@ -89,23 +89,23 @@ public:
     }
 
     // refract_index is ratio of external refract index to internal refract index
-    static Vector3<T> refract(const Vector3<T>& vec, const Vector3<T>& normal, double refract_index) {
-        assert(Double_equal::is_equal(1, vec.len()));
-        assert(Double_equal::is_equal(1, normal.len()));
-
-        Vector3 true_normal = normal;
-
-        double vec_normal_cos = -vec * normal;
-        if (vec_normal_cos < 0) {
-            vec_normal_cos = -vec_normal_cos;
-            true_normal = -normal;
-            refract_index = 1 / refract_index;
-        }
-
-        double ref_vec_normal_cos = sqrt(1 - refract_index * (1 - vec_normal_cos * vec_normal_cos));
-
-        return vec * refract_index + true_normal * (refract_index * vec_normal_cos - ref_vec_normal_cos);
-    }
+//    static Vector3<T> refract(const Vector3<T>& vec, const Vector3<T>& normal, double refract_index) {
+//        assert(Double_equal::is_equal(1, vec.len()));
+//        assert(Double_equal::is_equal(1, normal.len()));
+//
+//        Vector3 true_normal = normal;
+//
+//        double vec_normal_cos = -vec * normal;
+//        if (vec_normal_cos < 0) {
+//            vec_normal_cos = -vec_normal_cos;
+//            true_normal = -normal;
+//            refract_index = 1 / refract_index;
+//        }
+//
+//        double ref_vec_normal_cos = sqrt(1 - refract_index * (1 - vec_normal_cos * vec_normal_cos));
+//
+//        return vec * refract_index + true_normal * (refract_index * vec_normal_cos - ref_vec_normal_cos);
+//    }
 };
 
 template <typename T>
@@ -198,43 +198,15 @@ struct SimpleColor {
     unsigned char b = 0;
 };
 
-__device__ static SimpleColor operator*(SimpleColor& color, const double scalar) {
-    color.r = (double)color.r * scalar;
-    color.g = (double)color.r * scalar;
-    color.b = (double)color.r * scalar;
+__device__ SimpleColor operator*(SimpleColor& color, const double scalar);
 
-    return color;
-}
+__device__ SimpleColor operator*(SimpleColor&& color, const double scalar);
 
-__device__ static SimpleColor operator*(SimpleColor&& color, const double scalar) {
-    color.r = (double)color.r * scalar;
-    color.g = (double)color.r * scalar;
-    color.b = (double)color.r * scalar;
+__device__ SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2);
 
-    return color;
-}
+__device__ SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2);
 
-__device__ static SimpleColor operator+(SimpleColor& color1, const SimpleColor& color2) {
-    color1.r += color2.r;
-    color1.g += color2.g;
-    color1.b += color2.b;
-
-    return color1;
-}
-
-__device__ static SimpleColor operator+(SimpleColor&& color1, const SimpleColor& color2) {
-    color1.r += color2.r;
-    color1.g += color2.g;
-    color1.b += color2.b;
-
-    return color1;
-}
-
-__device__ static void copy_simple_color(const SimpleColor& from, SimpleColor& to) {
-    to.r = from.r;
-    to.g = from.g;
-    to.b = from.b;
-}
+__device__ void copy_simple_color(const SimpleColor& from, SimpleColor& to);
 
 class Color: public Vector3<unsigned char> {
 public:
